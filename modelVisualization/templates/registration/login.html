@@ -1,0 +1,98 @@
+{% extends 'training/base.html' %}
+
+{% block title %}登录 - EEG情绪识别模型训练平台{% endblock %}
+
+{% block content %}
+<div class="layui-container" style="margin-top: 100px;">
+    <div class="layui-row">
+        <div class="layui-col-md4 layui-col-md-offset4">
+            <div class="layui-card">
+                <div class="layui-card-header" style="text-align: center; font-size: 20px;">
+                    <i class="layui-icon layui-icon-username"></i> 用户登录
+                </div>
+                <div class="layui-card-body">
+                    <form class="layui-form" method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.errors %}
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <div class="layui-bg-red" style="padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                                    <i class="layui-icon layui-icon-face-cry"></i> 
+                                    用户名或密码错误
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">用户名</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="username" required lay-verify="required" 
+                                       placeholder="请输入用户名" autocomplete="username"
+                                       class="layui-input" value="{{ form.username.value|default_if_none:'' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">密码</label>
+                            <div class="layui-input-block">
+                                <input type="password" name="password" required lay-verify="required" 
+                                       placeholder="请输入密码" autocomplete="current-password"
+                                       class="layui-input">
+                            </div>
+                        </div>
+                        
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn layui-btn-fluid" lay-submit lay-filter="form-submit">
+                                    <i class="layui-icon layui-icon-ok"></i> 登录
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; color: #999; margin-top: 20px;">
+                            没有账户？<a href="javascript:;" onclick="showRegisterInfo()">请联系管理员</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- 默认账户信息提示 -->
+            <div class="layui-card" style="margin-top: 20px; display: none;" id="register-info">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-tips"></i> 账户信息
+                </div>
+                <div class="layui-card-body">
+                    <p>默认管理员账户：</p>
+                    <ul>
+                        <li>用户名：<strong>admin</strong></li>
+                        <li>密码：<strong>admin123</strong></li>
+                    </ul>
+                    <p style="margin-top: 10px; color: #ff5722;">
+                        <i class="layui-icon layui-icon-face-smile"></i> 
+                        请及时修改默认密码！
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+layui.use(['form', 'layer'], function(){
+    var form = layui.form;
+    var layer = layui.layer;
+    
+    // 表单提交
+    form.on('submit(form-submit)', function(data){
+        // 表单会自动提交，这里不需要额外处理
+        return true;
+    });
+});
+
+function showRegisterInfo() {
+    $('#register-info').slideToggle();
+}
+</script>
+{% endblock %}

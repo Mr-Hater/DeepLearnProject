@@ -1,0 +1,716 @@
+<!-- templates/training/model_general.html -->
+{% load static %}
+
+<div class="layui-card">
+    <div class="layui-card-header">
+        <i class="layui-icon layui-icon-component"></i> {{ model_name }} - 模型训练配置
+        <span class="layui-badge layui-bg-blue">{{ category }}</span>
+    </div>
+    <div class="layui-card-body">
+        
+        <!-- 顶部：模型信息和预设选择 -->
+        <div class="layui-row" style="margin-bottom: 20px;">
+            <div class="layui-col-md-12">
+                <div class="layui-form">
+                    <div class="layui-form-item">
+                        <label class="layui-form-label">当前预设</label>
+                        <div class="layui-input-inline">
+                            <select name="current_preset" id="current-preset" lay-filter="preset-select">
+                                <option value="">请选择预设</option>
+                                {% for preset in presets %}
+                                <option value="{{ preset }}" {% if preset == current_preset %}selected{% endif %}>{{ preset }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="layui-form-mid layui-word-aux">选择配置预设</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 配置编辑区域 -->
+        <form class="layui-form" id="config-form">
+            <!-- 训练参数 -->
+            <fieldset class="layui-elem-field">
+                <legend><i class="layui-icon layui-icon-set"></i> 训练参数</legend>
+                <div class="layui-field-box">
+                    <div class="layui-row">
+                        <div class="layui-col-md-6">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">批大小</label>
+                                <div class="layui-input-block">
+                                    <input type="number" name="batch_size" value="{{ config.batch_size|default:256 }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">训练轮数</label>
+                                <div class="layui-input-block">
+                                    <input type="number" name="epochs" value="{{ config.epochs|default:100 }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">学习率</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="lr" value="{{ config.lr|default:'0.001' }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">设备</label>
+                                <div class="layui-input-block">
+                                    <select name="device">
+                                        <option value="cuda" {% if config.device == 'cuda' %}selected{% endif %}>GPU</option>
+                                        <option value="cpu" {% if config.device == 'cpu' %}selected{% endif %}>CPU</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="layui-col-md-6">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">随机种子</label>
+                                <div class="layui-input-block">
+                                    <input type="number" name="seed" value="{{ config.seed|default:2024 }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">损失函数</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="loss_func" value="{{ config.loss_func|default:'crossEntropyLoss' }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">评估指标</label>
+                                <div class="layui-input-block" id="metrics-checkbox">
+                                    <input type="checkbox" name="metrics" value="acc" title="准确率" {% if 'acc' in config.metrics %}checked{% endif %}>
+                                    <input type="checkbox" name="metrics" value="macro-f1" title="宏F1" {% if 'macro-f1' in config.metrics %}checked{% endif %}>
+                                    <input type="checkbox" name="metrics" value="micro-f1" title="微F1">
+                                    <input type="checkbox" name="metrics" value="precision" title="精确率">
+                                    <input type="checkbox" name="metrics" value="recall" title="召回率">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">主要指标</label>
+                                <div class="layui-input-block">
+                                    <select name="metric_choose">
+                                        <option value="acc" {% if config.metric_choose == 'acc' %}selected{% endif %}>准确率</option>
+                                        <option value="macro-f1" {% if config.metric_choose == 'macro-f1' %}selected{% endif %}>宏F1</option>
+                                        <option value="micro-f1">微F1</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- 数据集参数 -->
+            <fieldset class="layui-elem-field">
+                <legend><i class="layui-icon layui-icon-chart"></i> 数据集参数</legend>
+                <div class="layui-field-box">
+                    <div class="layui-row">
+                        <div class="layui-col-md-6">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">数据集</label>
+                                <div class="layui-input-block">
+                                    <select name="dataset">
+                                        <option value="seed_de_lds" {% if config.dataset == 'seed_de_lds' %}selected{% endif %}>SEED (微分熵)</option>
+                                        <option value="seed_raw" {% if config.dataset == 'seed_raw' %}selected{% endif %}>SEED (原始)</option>
+                                        <option value="seediv_raw" {% if config.dataset == 'seediv_raw' %}selected{% endif %}>SEED-IV</option>
+                                        <option value="hci" {% if config.dataset == 'hci' %}selected{% endif %}>HCI</option>
+                                        <option value="deap" {% if config.dataset == 'deap' %}selected{% endif %}>DEAP</option>
+                                        <option value="deap_raw" {% if config.dataset == 'deap_raw' %}selected{% endif %}>DEAP (原始)</option>
+                                        <option value="dreamer" {% if config.dataset == 'dreamer' %}selected{% endif %}>DREAMER</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">数据集路径</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="dataset_path" value="{{ config.dataset_path|default:'' }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">低通滤波</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="low_pass" value="{{ config.low_pass|default:'0.3' }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">高通滤波</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="high_pass" value="{{ config.high_pass|default:'50' }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">时间窗口</label>
+                                <div class="layui-input-block">
+                                    <input type="number" name="time_window" value="{{ config.time_window|default:1 }}" class="layui-input" step="0.1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="layui-col-md-6">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">重叠长度</label>
+                                <div class="layui-input-block">
+                                    <input type="number" name="overlap" value="{{ config.overlap|default:0 }}" class="layui-input" step="0.1">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">样本长度</label>
+                                <div class="layui-input-block">
+                                    <input type="number" name="sample_length" value="{{ config.sample_length|default:200 }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">滑动步长</label>
+                                <div class="layui-input-block">
+                                    <input type="number" name="stride" value="{{ config.stride|default:200 }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">特征类型</label>
+                                <div class="layui-input-block">
+                                    <select name="feature_type">
+                                        <option value="de_lds" {% if config.feature_type == 'de_lds' %}selected{% endif %}>微分熵+局部动态系统</option>
+                                        <option value="psd" {% if config.feature_type == 'psd' %}selected{% endif %}>功率谱密度</option>
+                                        <option value="psd_lds" {% if config.feature_type == 'psd_lds' %}selected{% endif %}>PSD+局部动态系统</option>
+                                        <option value="de" {% if config.feature_type == 'de' %}selected{% endif %}>微分熵</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <div class="layui-input-block">
+                                    <input type="checkbox" name="eog_clean" title="清除眼电信号" {% if config.eog_clean %}checked{% endif %}>
+                                    <input type="checkbox" name="only_seg" title="仅数据分段" {% if config.only_seg %}checked{% endif %}>
+                                    <input type="checkbox" name="normalize" title="数据归一化" {% if config.normalize %}checked{% endif %}>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- 实验设置参数 -->
+            <fieldset class="layui-elem-field">
+                <legend><i class="layui-icon layui-icon-engine"></i> 实验设置参数</legend>
+                <div class="layui-field-box">
+                    <div class="layui-row">
+                        <div class="layui-col-md-6">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">实验设置</label>
+                                <div class="layui-input-block">
+                                    <select name="setting">
+                                        <option value="seed_sub_dependent_train_val_test_setting" {% if config.setting == 'seed_sub_dependent_train_val_test_setting' %}selected{% endif %}>SEED被试依赖训练验证测试</option>
+                                        <option value="seediv_sub_dependent_train_val_test_setting" {% if config.setting == 'seediv_sub_dependent_train_val_test_setting' %}selected{% endif %}>SEED-IV被试依赖训练验证测试</option>
+                                        <option value="seed_sub_independent_train_val_test_setting" {% if config.setting == 'seed_sub_independent_train_val_test_setting' %}selected{% endif %}>SEED被试独立训练验证测试</option>
+                                        <option value="seediv_sub_independent_train_val_test_setting" {% if config.setting == 'seediv_sub_independent_train_val_test_setting' %}selected{% endif %}>SEED-IV被试独立训练验证测试</option>
+                                        <option value="deap_sub_dependent_train_val_test_setting" {% if config.setting == 'deap_sub_dependent_train_val_test_setting' %}selected{% endif %}>DEAP被试依赖训练验证测试</option>
+                                        <option value="hci_sub_dependent_train_val_test_setting" {% if config.setting == 'hci_sub_dependent_train_val_test_setting' %}selected{% endif %}>HCI被试依赖训练验证测试</option>
+                                        <option value="deap_sub_independent_train_val_test_setting" {% if config.setting == 'deap_sub_independent_train_val_test_setting' %}selected{% endif %}>DEAP被试独立训练验证测试</option>
+                                        <option value="hci_sub_independent_train_val_test_setting" {% if config.setting == 'hci_sub_independent_train_val_test_setting' %}selected{% endif %}>HCI被试独立训练验证测试</option>
+                                        <option value="seed_sub_dependent_5fold_setting" {% if config.setting == 'seed_sub_dependent_5fold_setting' %}selected{% endif %}>SEED被试依赖5折交叉</option>
+                                        <option value="seed_sub_dependent_front_back_setting" {% if config.setting == 'seed_sub_dependent_front_back_setting' %}selected{% endif %}>SEED被试依赖前部训练</option>
+                                        <option value="seed_sub_independent_leave_one_out_setting" {% if config.setting == 'seed_sub_independent_leave_one_out_setting' %}selected{% endif %}>SEED被试独立留一法</option>
+                                        <option value="seed_cross_session_setting" {% if config.setting == 'seed_cross_session_setting' %}selected{% endif %}>SEED跨会话实验</option>
+                                        <option value="deap_sub_independent_leave_one_out_setting" {% if config.setting == 'deap_sub_independent_leave_one_out_setting' %}selected{% endif %}>DEAP被试独立留一法</option>
+                                        <option value="deap_sub_dependent_10fold_setting" {% if config.setting == 'deap_sub_dependent_10fold_setting' %}selected{% endif %}>DEAP被试依赖10折交叉</option>
+                                        <option value="dreamer_sub_independent_setting" {% if config.setting == 'dreamer_sub_independent_setting' %}selected{% endif %}>DREAMER被试独立</option>
+                                        <option value="dreamer_sub_dependent_setting" {% if config.setting == 'dreamer_sub_dependent_setting' %}selected{% endif %}>DREAMER被试依赖</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">跨试次</label>
+                                <div class="layui-input-block">
+                                    <select name="cross_trail">
+                                        <option value="true" {% if config.cross_trail == 'true' %}selected{% endif %}>是</option>
+                                        <option value="false" {% if config.cross_trail == 'false' %}selected{% endif %}>否</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">实验模式</label>
+                                <div class="layui-input-block">
+                                    <select name="experiment_mode">
+                                        <option value="subject-dependent" {% if config.experiment_mode == 'subject-dependent' %}selected{% endif %}>被试依赖</option>
+                                        <option value="subject-independent" {% if config.experiment_mode == 'subject-independent' %}selected{% endif %}>被试独立</option>
+                                        <option value="cross-session" {% if config.experiment_mode == 'cross-session' %}selected{% endif %}>跨会话</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">分割类型</label>
+                                <div class="layui-input-block">
+                                    <select name="split_type">
+                                        <option value="kfold" {% if config.split_type == 'kfold' %}selected{% endif %}>K折交叉</option>
+                                        <option value="front-back" {% if config.split_type == 'front-back' %}selected{% endif %}>前部训练</option>
+                                        <option value="early-stop" {% if config.experiment_mode == 'early-stop' %}selected{% endif %}>早停法</option>
+                                        <option value="leave-one-out" {% if config.split_type == 'leave-one-out' %}selected{% endif %}>留一法</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">K折数</label>
+                                <div class="layui-input-block">
+                                    <input type="number" name="fold_num" value="{{ config.fold_num|default:5 }}" class="layui-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="layui-col-md-6">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">打乱数据</label>
+                                <div class="layui-input-block">
+                                    <select name="fold_shuffle">
+                                        <option value="true" {% if config.fold_shuffle == 'true' %}selected{% endif %}>是</option>
+                                        <option value="false" {% if config.fold_shuffle == 'false' %}selected{% endif %}>否</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">前部数量</label>
+                                <div class="layui-input-block">
+                                    <input type="number" name="front" value="{{ config.front|default:9 }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">测试集比例</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="test_size" value="{{ config.test_size|default:'0.2' }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">验证集比例</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="val_size" value="{{ config.val_size|default:'0.2' }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">使用会话</label>
+                                <div class="layui-input-block" id="sessions-checkbox">
+                                    <input type="checkbox" name="sessions" value="1" title="会话1">
+                                    <input type="checkbox" name="sessions" value="2" title="会话2">
+                                    <input type="checkbox" name="sessions" value="3" title="会话3">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">使用标签</label>
+                                <div class="layui-input-block" id="label-checkbox">
+                                    <input type="checkbox" name="label_used" value="valence" title="效价">
+                                    <input type="checkbox" name="label_used" value="arousal" title="唤醒度">
+                                    <input type="checkbox" name="label_used" value="dominance" title="支配度">
+                                    <input type="checkbox" name="label_used" value="liking" title="喜好度">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- 其他参数 -->
+            <fieldset class="layui-elem-field">
+                <legend><i class="layui-icon layui-icon-more"></i> 其他参数</legend>
+                <div class="layui-field-box">
+                    <div class="layui-row">
+                        <div class="layui-col-md-6">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">工作进程数</label>
+                                <div class="layui-input-block">
+                                    <input type="number" name="num_workers" value="{{ config.num_workers|default:4 }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">数据目录</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="data_dir" value="{{ config.data_dir|default:'./data_processed' }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">日志目录</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="log_dir" value="{{ config.log_dir|default:'./log/' }}" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">输出目录</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="output_dir" value="{{ config.output_dir|default:'./result/' }}" class="layui-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="layui-col-md-6">
+                            <div class="layui-form-item">
+                                <div class="layui-input-block">
+                                    <input type="checkbox" name="onehot" title="One-hot编码" {% if config.onehot %}checked{% endif %}>
+                                    <input type="checkbox" name="keep_dim" title="保持维度" {% if config.keep_dim %}checked{% endif %}>
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">边界值</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="bounds_low" placeholder="低边界" value="{% if config.bounds %}{{ config.bounds.0 }}{% endif %}" class="layui-input" style="width: 45%; display: inline-block;">
+                                    <span style="display: inline-block; width: 10%; text-align: center;">~</span>
+                                    <input type="text" name="bounds_high" placeholder="高边界" value="{% if config.bounds %}{{ config.bounds.1 }}{% endif %}" class="layui-input" style="width: 45%; display: inline-block;">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">主要轮次</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="pr" value="{{ config.pr|default:'' }}" placeholder="如: 1 2 3" class="layui-input">
+                                </div>
+                            </div>
+
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">次要轮次</label>
+                                <div class="layui-input-block">
+                                    <input type="text" name="sr" value="{{ config.sr|default:'' }}" placeholder="如: 1 2 3" class="layui-input">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- 预设管理区域 -->
+            <fieldset class="layui-elem-field" style="margin-top: 20px;">
+                <legend><i class="layui-icon layui-icon-template"></i> 预设管理</legend>
+                <div class="layui-field-box">
+                    <div class="layui-form">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">预设名称</label>
+                            <div class="layui-input-inline">
+                                <input type="text" id="preset-name" placeholder="输入新预设名称" class="layui-input">
+                            </div>
+                            <div class="layui-input-inline">
+                                <button type="button" class="layui-btn" id="save-as-preset">
+                                    <i class="layui-icon layui-icon-add-circle"></i> 保存为新预设
+                                </button>
+                                <button type="button" class="layui-btn layui-btn-danger" id="delete-preset">
+                                    <i class="layui-icon layui-icon-delete"></i> 删除当前预设
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- 训练按钮（放在最下面） -->
+            <div class="layui-form-item" style="margin-top: 30px;">
+                <div class="layui-input-block">
+                    <button type="button" class="layui-btn layui-btn-lg layui-btn-normal" id="start-training" style="width: 200px;">
+                        <i class="layui-icon layui-icon-play"></i> 开始训练
+                    </button>
+                    <div class="layui-form-mid layui-word-aux">点击开始使用当前配置训练模型</div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 配置查看模态框 -->
+<div id="config-modal" style="display: none; padding: 20px;">
+    <pre id="config-content" style="max-height: 500px; overflow: auto; background: #f2f2f2; padding: 10px;"></pre>
+</div>
+
+<!-- 代码查看模态框 -->
+<div id="code-modal" style="display: none; padding: 20px;">
+    <pre id="code-content" style="max-height: 500px; overflow: auto; background: #f2f2f2; padding: 10px;"></pre>
+</div>
+
+<script>
+layui.use(['form', 'layer'], function(){
+    var form = layui.form;
+    var layer = layui.layer;
+
+    // 初始化表单
+    form.render();
+
+    // 预设选择事件
+    form.on('select(preset-select)', function(data){
+        var presetName = data.value;
+        if (!presetName) return;
+
+        // 加载预设配置
+        $.get('/get-preset-config/', {
+            model_name: "{{ model_name }}",
+            preset_name: presetName
+        }, function(res){
+            if (res.success) {
+                // 更新表单数据
+                updateFormWithConfig(res.config);
+                layer.msg('已加载预设: ' + presetName);
+            } else {
+                layer.msg('加载失败: ' + res.message, {icon: 2});
+            }
+        });
+    });
+
+    // 保存为新预设
+    $('#save-as-preset').click(function(){
+        var presetName = $('#preset-name').val();
+        if (!presetName) {
+            layer.msg('请输入预设名称', {icon: 2});
+            return;
+        }
+
+        // 收集表单数据
+        var formData = collectFormData();
+
+        // 添加模型信息
+        formData.model_name = "{{ model_name }}";
+        formData.preset_name = presetName;
+
+        $.ajax({
+            url: '/save-preset/',
+            type: 'POST',
+            data: formData,
+            success: function(res){
+                if (res.success) {
+                    layer.msg('预设保存成功', {icon: 1});
+                    // 更新预设选择列表
+                    updatePresetList();
+                    $('#preset-name').val('');
+                } else {
+                    layer.msg('保存失败: ' + res.message, {icon: 2});
+                }
+            }
+        });
+    });
+
+    // 删除当前预设
+    $('#delete-preset').click(function(){
+        var presetName = $('#current-preset').val();
+        if (!presetName || presetName === 'default') {
+            layer.msg('不能删除默认预设', {icon: 2});
+            return;
+        }
+
+        layer.confirm('确定删除预设 "' + presetName + '" 吗？', function(index){
+            $.ajax({
+                url: '/delete-preset/',
+                type: 'POST',
+                data: {
+                    model_name: "{{ model_name }}",
+                    preset_name: presetName
+                },
+                success: function(res){
+                    layer.close(index);
+                    if (res.success) {
+                        layer.msg('预设已删除', {icon: 1});
+                        // 更新预设选择列表
+                        updatePresetList();
+                        // 切换到默认预设
+                        $('#current-preset').val('default');
+                        form.render('select');
+                        // 加载默认配置
+                        form.trigger('select', 'preset-select');
+                    } else {
+                        layer.msg('删除失败: ' + res.message, {icon: 2});
+                    }
+                }
+            });
+        });
+    });
+
+    // 开始训练
+    $('#start-training').click(function(){
+        // 收集表单数据
+        var formData = collectFormData();
+        formData.model_name = "{{ model_name }}";
+        formData.category = "{{ category }}";
+        layer.msg('提交训练任务...', {icon: 16, time: 0});
+
+        $.ajax({
+            url: '/start-training/',
+            type: 'POST',
+            data: formData,
+            success: function(res){
+                layer.closeAll();
+                if (res.success) {
+                    layer.msg('训练任务已提交: ' + res.task_id, {icon: 1});
+                } else {
+                    layer.msg('提交失败: ' + res.message, {icon: 2});
+                }
+            },
+            error: function(){
+                layer.closeAll();
+                layer.msg('请求失败', {icon: 2});
+            }
+        });
+
+    });
+
+    // 辅助函数：收集表单数据
+    function collectFormData() {
+        var formData = {};
+
+        // 1. 收集所有输入字段
+        $('#config-form').find('input, select, textarea').each(function() {
+            var $elem = $(this);
+            var name = $elem.attr('name');
+            var type = $elem.attr('type');
+
+            if (!name) return;  // 跳过没有name的字段
+
+            // 根据不同类型处理
+            if (type === 'checkbox') {
+                // 复选框处理
+                var value = $elem.val();
+                var checked = $elem.prop('checked');
+
+                if (!formData[name]) {
+                    formData[name] = [];
+                }
+
+                if (checked && value !== undefined) {
+                    // 尝试转换为数字
+                    var val = value;
+                    if ($.isNumeric(value)) {
+                        val = Number(value);
+                    }
+                    formData[name].push(val);
+                }
+
+            } else if (type === 'radio') {
+                // 单选按钮（如果有的话）
+                if ($elem.prop('checked')) {
+                    formData[name] = $elem.val();
+                }
+
+            } else if (type === 'number') {
+                // 数字输入框
+                var value = $elem.val();
+                if (value !== '' && value !== undefined) {
+                    formData[name] = Number(value);
+                }
+
+            } else {
+                // 文本输入框、下拉框等
+                var value = $elem.val();
+                if (value !== '' && value !== undefined) {
+                    formData[name] = value;
+                }
+            }
+        });
+
+        // 2. 特殊处理边界值
+        var boundsLow = $('input[name="bounds_low"]').val();
+        var boundsHigh = $('input[name="bounds_high"]').val();
+        if (boundsLow && boundsHigh) {
+            var low = Number(boundsLow);
+            var high = Number(boundsHigh);
+            if (!isNaN(low) && !isNaN(high)) {
+                formData['bounds'] = [low, high];
+            }
+        }
+
+        // 3. 移除空数组
+        for (var key in formData) {
+            if (Array.isArray(formData[key]) && formData[key].length === 0) {
+                delete formData[key];
+            }
+        }
+
+        return formData;
+    }
+
+    // 辅助函数：用配置数据更新表单
+    function updateFormWithConfig(config) {
+        // 1. 先更新所有非复选框字段
+        for (var key in config) {
+            var value = config[key];
+            var $input = $('[name="' + key + '"]');
+
+            if ($input.length && !$input.is(':checkbox')) {
+                $input.val(value);
+            }
+        }
+        console.log(config)
+        // 2. 处理数组字段（多选复选框）
+        var arrayFields = ['metrics', 'sessions', 'label_used'];
+        arrayFields.forEach(function(fieldName) {
+            console.log("------------------------------------")
+            console.log(fieldName)
+            console.log(config[fieldName])
+            console.log(Array.isArray(config[fieldName]))
+
+            if (config[fieldName] && Array.isArray(config[fieldName])) {
+                var values = config[fieldName];
+                $('[name="' + fieldName + '"]').each(function() {
+                    var $cb = $(this);
+                    var cbValue = $cb.val();
+                    // 转换为字符串比较
+                    var isChecked = values.some(function(v) {
+                        return String(v) === String(cbValue);
+                    });
+                    $cb.prop('checked', isChecked);
+                });
+            }
+        });
+
+        // 3. 处理边界值
+        if (config.bounds && Array.isArray(config.bounds)) {
+            $('input[name="bounds_low"]').val(config.bounds[0]);
+            $('input[name="bounds_high"]').val(config.bounds[1]);
+        }
+
+        // 4. 处理布尔值复选框
+        var boolFields = ['eog_clean', 'only_seg', 'normalize', 'onehot', 'keep_dim'];
+        boolFields.forEach(function(fieldName) {
+            if (config[fieldName] !== undefined) {
+                $('[name="' + fieldName + '"]').prop('checked', !!config[fieldName]);
+            }
+        });
+
+        // 重新渲染
+        form.render();
+    }
+    
+    // 辅助函数：更新预设列表
+    function updatePresetList() {
+        $.get('/get-model-presets/', {
+            model_name: "{{ model_name }}"
+        }, function(res){
+            if (res.success) {
+                var $select = $('#current-preset');
+                $select.empty();
+                $select.append('<option value="">请选择预设</option>');
+                res.presets.forEach(function(preset){
+                    $select.append('<option value="' + preset + '">' + preset + '</option>');
+                });
+                form.render('select');
+            }
+        });
+    }
+});
+</script>

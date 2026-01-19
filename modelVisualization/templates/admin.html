@@ -1,0 +1,190 @@
+{% extends 'public/layout.html' %}
+{% load static %}
+
+{% block style %}
+<style>
+/* 未实现模型的样式 */
+.not-implemented {
+    color: #999 !important;
+    opacity: 0.7;
+}
+
+.not-implemented:hover {
+    color: #666 !important;
+    opacity: 0.9;
+}
+
+/* 模型项选中样式 */
+.model-item.layui-this {
+    background-color: #f2f2f2 !important;
+    color: #333 !important;
+}
+
+/* 面包屑导航样式 */
+.breadcrumb {
+    border-left: 4px solid #1E9FFF;
+}
+
+.breadcrumb .layui-badge {
+    vertical-align: middle;
+}
+
+/* 响应式调整 */
+@media screen and (max-width: 768px) {
+    .breadcrumb {
+        font-size: 14px;
+        padding: 8px 10px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block inOne %}
+    <!-- 默认首页显示 -->
+    <!-- 左部列区 -->
+    <div class="layui-side layui-bg-black">
+        <div class="layui-side-scroll" id="left-sidebar">
+            <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+            <ul class="layui-nav layui-nav-tree" lay-filter="test">
+            </ul>
+        </div>
+    </div>
+    <!-- 内容展示 -->
+    <div class="layui-body">
+        <!-- 内容主体区域 -->
+        <div style="padding: 15px;" id="main-content">
+            <blockquote class="layui-elem-quote layui-text">
+            <i class="layui-icon layui-icon-face-smile" style="font-size: 30px; color: #1E9FFF;"></i>
+                <span style="font-size: 25px">LibEER算法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法法使用系统</span>
+            </blockquote>
+            <div><img src="{% static "img/2.gif" %}" style="margin: 0 auto; height: auto;width: 100%"></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+<script>
+// 头部事件绑定
+layui.use(['element', 'layer', 'util'], function(){
+    var element = layui.element;
+    var layer = layui.layer;
+    var util = layui.util;
+    var $ = layui.$;
+
+
+     // 头部事件 右边栏设置
+    util.event('lay-header-event', {
+        menuLeft: function(othis){ // 左侧菜单事件
+            layer.msg('展开左侧菜单的操作', {icon: 0});
+        },
+        menuRight: function(){  // 右侧菜单事件
+            layer.open({
+                type: 1,
+                title: '更多',
+                content: '<div style="padding: 15px;">处理右侧面板的操作</div>',
+                area: ['260px', '100%'],
+                offset: 'rt', // 右上角
+                anim: 'slideLeft', // 从右侧抽屉滑出
+                shadeClose: true,
+                scrollbar: false
+            });
+        }
+    });
+
+    // 监听头部导航点击事件
+    $(document).on('click', '.layui-header .layui-nav .layui-nav-item a[data-target]', function(e) {
+        e.preventDefault();
+        var target = $(this).data('target');
+
+        // 移除其他项的选中状态
+        $('.layui-nav .layui-nav-item').removeClass('layui-this');
+        $(this).parent().addClass('layui-this');
+
+        loadPageContent(target);
+    });
+
+    function loadPageContent(pageType) {
+        // 加载左侧菜单
+        $.get('/load-left-menu/?type=' + pageType, function(data) {
+            $('#left-sidebar').html(data.html);
+            element.render('nav');
+
+            // 根据页面类型绑定不同事件
+            if (pageType === 'introduction') {
+                Introduction_bindLeftMenuEvents();
+            } else if (pageType === 'useModel') {
+                bindUseModelMenuEvents();
+            }
+        });
+
+        // 加载右侧内容
+        $.get('/load-content/?type=' + pageType, function(data) {
+            $('#main-content').html(data.html);
+        });
+    }
+
+    // 算法介绍左边导航点击事件
+    function Introduction_bindLeftMenuEvents() {
+        element.on('nav(introductionLeftList)', function (elem) {
+            console.log(elem); // 得到当前点击的元素 jQuery 对象
+            layer.msg(elem.text());
+            if (elem.text() == "CNN" ||
+                elem.text() == "RNN" ||
+                elem.text() == "GNN" ||
+                elem.text() == "DNN" ||
+                elem.text() == "Transformer")
+                return
+            $.ajax({
+                url: '/get/Index/',
+                type: "GET",
+                dataType: "JSON",
+                data: {
+                  "getText": elem.text()
+                },
+                success: function (res) {
+                  $('#pdfViewer').attr('src', res.pdf_url);
+                  $('#pdfName').text(res.pdf_name)
+                }
+            })
+        });
+    }
+
+    // 算法使用菜单点击事件
+    function bindUseModelMenuEvents() {
+        element.on('nav(useModelMenu)', function(elem) {
+            var $elem = $(elem);
+            var itemType = $elem.data('type');  // intro, register
+            var itemId = $elem.data('id');      // intro, register
+            var modelName = $elem.data('model'); // 模型名称
+            var category = $elem.data('category'); // 模型类别
+
+            var urlstr = '';
+            if (itemType) {
+                // 固定菜单项点击
+                switch(itemType) {
+                    case 'intro':
+                        urlstr = "/load-model-intro/"
+                        break;
+                    case 'register':
+                        urlstr = "/load-model-registration/"
+                        break;
+                    case 'history':
+                        urlstr = "/load-model-history/"
+                        break;
+                }
+                 $.get(urlstr, function(data) {
+                    $('#main-content').html(data.html);
+                });
+            } else if (modelName) {
+                // 模型点击
+                $.get('/load-model-interface/?model=' + modelName + '&category=' + category, function(data) {
+                    $('#main-content').html(data.html);
+                });
+            }
+        });
+    }
+
+
+});
+</script>
+{% endblock %}

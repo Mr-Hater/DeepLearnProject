@@ -1,0 +1,16 @@
+{% extends 'public/base.html' %}
+{% load static %}
+
+
+{% block content %}
+<div class="layui-layout layui-layout-admin">
+    <!-- 头部行区：主要内容切换？ 还是说将左部列区作为主要内容切换？ -->
+    {% include 'public/header.html' %}
+
+    {% block inOne %}
+    {% endblock %}
+
+    <!-- 底部固定区域 -->
+    {% include 'public/bottom.html' %}
+</div>
+{% endblock %}
