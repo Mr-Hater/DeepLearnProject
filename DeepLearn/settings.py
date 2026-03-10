@@ -208,3 +208,8 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
+
+# DATA_ROOT = os.path.join(BASE_DIR, "../../data")
+DATA_ROOT = "D:/Work/Studio/PyCharm/PythonProject/DeepLearn/LibEER/data_utils/Dataset"
+# 数据目录
+DATA_DIR = os.path.join(BASE_DIR, 'D:/Work/Studio/PyCharm/PythonProject/DeepLearn/LibEER/data_utils/Dataset/SEED')

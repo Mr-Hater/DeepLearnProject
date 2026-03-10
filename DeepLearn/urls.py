@@ -37,17 +37,14 @@ urlpatterns = [
     path('load-left-menu/', admin.load_left_menu, name='load_left_menu'),
     path('load-content/', admin.load_content, name='load_content'),
 
-    path('load-model-intro/', training.load_model_intro, name='load-model-intro'),
-    path('load-model-registration/', training.load_model_registration, name='load-model-registration'),
-    path('load-model-history/', training.load_model_history, name='load-model-history'),
-    path('load-model-interface/', training.load_model_interface, name='load-model-interface'),
 
-    path('', include('modelVisualization.urls')),
-
+    path('', include('modelVisualization.urls.training_urls')),
+    path('seed/', include('modelVisualization.urls.seedVisualization_urls')),
 
     # 添加认证相关的URL
     path('accounts/login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
     path('accounts/logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
+
 ]
 
 # 仅在 DEBUG 模式下提供媒体文件服务
