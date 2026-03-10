@@ -49,6 +49,7 @@
             </ul>
         </div>
     </div>
+
     <!-- 内容展示 -->
     <div class="layui-body">
         <!-- 内容主体区域 -->
@@ -109,14 +110,17 @@ layui.use(['element', 'layer', 'util'], function(){
             $('#left-sidebar').html(data.html);
             element.render('nav');
 
+
+
             // 根据页面类型绑定不同事件
             if (pageType === 'introduction') {
                 Introduction_bindLeftMenuEvents();
             } else if (pageType === 'useModel') {
                 bindUseModelMenuEvents();
+            } else if (pageType === 'SEEDVisualization'){
+                bindSEEDVisualizationEvents();
             }
         });
-
         // 加载右侧内容
         $.get('/load-content/?type=' + pageType, function(data) {
             $('#main-content').html(data.html);
@@ -184,6 +188,31 @@ layui.use(['element', 'layer', 'util'], function(){
         });
     }
 
+    // 算法使用菜单点击事件
+    function bindSEEDVisualizationEvents() {
+        element.on('nav(SEEDVisualization)', function(elem) {
+            var $elem = $(elem);
+            var itemType = $elem.data('target');
+            var urlstr = '';
+            if (itemType) {
+                // 固定菜单项点击
+                switch(itemType) {
+                    case 'topomap':
+                        urlstr = "/seed/load-topomap/"
+                        break;
+                    case 'singleEEG':
+                        urlstr = "/seed/load-singleEEG/"
+                        break;
+                    case 'doubleEEG':
+                        urlstr = "/seed/load-doubleEEG/"
+                        break;
+                }
+                 $.get(urlstr, function(data) {
+                    $('#main-content').html(data.html);
+                });
+            }
+        });
+    }
 
 });
 </script>

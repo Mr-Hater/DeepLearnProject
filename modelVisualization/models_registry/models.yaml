@@ -1,0 +1,22 @@
+models:
+- category: 卷积神经网络
+  code_file: EEGNet.py
+  config_file: EEGNet.yaml
+  description: ''
+  name: EEGNet
+  registered_at: '2026-01-18 16:21:48'
+  train_file: EEGNet_train.py
+- category: 图神经网络
+  code_file: RGNN.py
+  config_file: RGNN.yaml
+  description: ''
+  name: RGNN
+  registered_at: '2026-01-18 16:22:55'
+  train_file: RGNN_train.py
+- category: 卷积神经网络
+  code_file: TSception.py
+  config_file: TSception.yaml
+  description: ''
+  name: TSception
+  registered_at: '2026-01-18 16:26:54'
+  train_file: TSception_train.py

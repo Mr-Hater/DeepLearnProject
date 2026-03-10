@@ -10,7 +10,7 @@ def generate_use_model_menu():
 
     # 1. 固定菜单项
     fixed_items = [
-        {'name': '简介', 'type': 'intro', 'id': 'intro'},
+        # {'name': '简介', 'type': 'intro', 'id': 'intro'},
         {'name': '注册模型', 'type': 'register', 'id': 'register'},
         {'name': '训练历史', 'type': 'history', 'id': 'history'}
     ]

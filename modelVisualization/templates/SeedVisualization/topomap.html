@@ -1,0 +1,380 @@
+{% load static %}
+来个脑子
+
+<style>
+        .container {
+            padding: 20px;
+        }
+        .topo-container {
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+        }
+        #topoChart {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #e6e6e6;
+            border-radius: 4px;
+        }
+        .info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #e6e6e6;
+            border-radius: 4px;
+            background-color: #fafafa;
+        }
+        .info-panel.hidden {
+            display: none;
+        }
+        .channel-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #1E9FFF;
+        }
+        .channel-detail {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .detail-item {
+            width: 50%;
+            margin-bottom: 8px;
+        }
+        .detail-label {
+            color: #666;
+            margin-right: 10px;
+        }
+        .detail-value {
+            color: #333;
+            font-weight: 500;
+        }
+        .analysis-chart {
+            width: 100%;
+            height: 200px;
+            margin-top: 15px;
+        }
+        .file-selector {
+            margin-bottom: 20px;
+        }
+    </style>
+        <div class="layui-card-body">
+             <h2>脑电拓扑图分析系统</h2>
+            <!-- 文件选择区域 -->
+            <div class="file-selector layui-form">
+                <div class="layui-row layui-col-space10">
+                    <div class="layui-col-md4">
+                        <select name="dataFile" id="dataFile" lay-filter="dataFile">
+                            <option value="">请选择脑电数据文件</option>
+                            <option value="sample1.mat">样本数据1 (情绪诱发)</option>
+                            <option value="sample2.mat">样本数据2 (静息态)</option>
+                            <option value="sample3.mat">样本数据3 (任务态)</option>
+                        </select>
+                    </div>
+                    <div class="layui-col-md2">
+                        <button class="layui-btn layui-btn-primary" id="loadDataBtn">
+                            <i class="layui-icon layui-icon-loading layui-hide" id="loadingIcon"></i>
+                            加载数据
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 拓扑图区域 -->
+            <div class="topo-container">
+                <div id="topoChart"></div>
+            </div>
+
+            <!-- 通道信息展示区域 -->
+            <div class="info-panel hidden" id="channelInfo">
+                <div class="channel-title" id="channelName">通道信息</div>
+                <div class="channel-detail" id="channelDetail">
+                    <!-- 动态填充内容 -->
+                </div>
+                <!-- 详细分析图表区域 -->
+                <div class="analysis-chart" id="analysisChart"></div>
+            </div>
+        </div>
+
+
+
+    <script src="{% static "plugins/layui-v2.13.3/layui/layui.js" %}"></script>
+    <script src="{% static "js/echarts.min.js" %}"></script>
+<script>
+layui.use(['layer', 'form'], function() {
+    var layer = layui.layer;
+    var form = layui.form;
+    var $ = layui.$;
+
+    // 全局变量
+    var topoChart = null;
+    var analysisChart = null;
+    var currentData = null;
+    var currentChannel = null;
+
+    // 初始化拓扑图
+    function initTopoChart() {
+        var chartDom = document.getElementById('topoChart');
+        topoChart = echarts.init(chartDom);
+
+        // 设置基本配置
+        var option = {
+            title: {
+                text: '62通道脑电拓扑图',
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: function(params) {
+                    if (params.dataType === 'node') {
+                        return params.data.name + '<br/>' +
+                               '脑区: ' + params.data.brainRegion + '<br/>' +
+                               '数值: ' + params.data.value.toFixed(4);
+                    }
+                    return params.name;
+                }
+            },
+            series: [{
+                type: 'graph',
+                layout: 'none',
+                coordinateSystem: 'cartesian2d',
+                symbolSize: 20,
+                roam: true,
+                label: {
+                    show: true,
+                    position: 'right',
+                    formatter: function(params) {
+                        return params.data.name;
+                    }
+                },
+                edgeSymbol: ['none', 'arrow'],
+                edgeLabel: {
+                    fontSize: 10
+                },
+                lineStyle: {
+                    color: '#999',
+                    width: 1,
+                    curveness: 0.3,
+                    opacity: 0.5
+                },
+                emphasis: {
+                    focus: 'adjacency',
+                    lineStyle: {
+                        width: 2
+                    }
+                },
+                data: [],
+                categories: [{
+                    name: '脑电通道',
+                    itemStyle: {
+                        color: '#1E9FFF'
+                    }
+                }]
+            }],
+            xAxis: {
+                show: false,
+                min: 0,
+                max: 1
+            },
+            yAxis: {
+                show: false,
+                min: 0,
+                max: 1
+            }
+        };
+
+        topoChart.setOption(option);
+
+        // 点击事件
+        topoChart.on('click', {seriesIndex: 0, dataType: 'node'}, function(params) {
+            showChannelDetail(params.data);
+        });
+    }
+
+    // 加载数据
+    function loadData(filePath) {
+        $('#loadingIcon').removeClass('layui-hide');
+
+        $.ajax({
+            url: '/seed/load-eeg-data/',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                file_path: filePath,
+                data_key: 'data'
+            }),
+            success: function(response) {
+                $('#loadingIcon').addClass('layui-hide');
+
+                if (response.success) {
+                    currentData = response;
+                    updateTopoChart(response);
+                    layer.msg('数据加载成功', {icon: 1});
+                } else {
+                    layer.msg('数据加载失败: ' + response.error, {icon: 2});
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#loadingIcon').addClass('layui-hide');
+                layer.msg('请求失败: ' + error, {icon: 2});
+            }
+        });
+    }
+
+    // 更新拓扑图
+    function updateTopoChart(data) {
+        // 构建节点数据
+        var nodes = [];
+        var edges = [];
+
+        data.channels.forEach(function(channel, index) {
+            nodes.push({
+                id: 'node' + index,
+                name: channel.name,
+                value: channel.value,
+                brainRegion: channel.brain_region,
+                description: channel.description,
+                analysis: channel.analysis,
+                category: 0,
+                x: data.coordinates[index][0],
+                y: data.coordinates[index][1],
+                itemStyle: {
+                    color: getColorByValue(channel.value, data.global_stats.min, data.global_stats.max)
+                },
+                symbolSize: 15 + Math.abs(channel.value) * 10
+            });
+
+            // 创建一些邻近连接（简化版，实际应该根据通道空间位置创建连接）
+            if (index > 0) {
+                edges.push({
+                    source: 'node' + (index - 1),
+                    target: 'node' + index
+                });
+            }
+        });
+
+        topoChart.setOption({
+            series: [{
+                data: nodes,
+                links: edges,
+                categories: [{
+                    name: '脑电通道',
+                    itemStyle: {
+                        color: '#1E9FFF'
+                    }
+                }]
+            }]
+        });
+    }
+
+    // 根据数值获取颜色
+    function getColorByValue(value, min, max) {
+        // 使用热力图颜色：低值蓝色，高值红色
+        var ratio = (value - min) / (max - min);
+        var r = Math.floor(255 * ratio);
+        var b = Math.floor(255 * (1 - ratio));
+        return 'rgb(' + r + ', 100, ' + b + ')';
+    }
+
+    // 显示通道详情
+    function showChannelDetail(channel) {
+        currentChannel = channel;
+
+        $('#channelName').text(channel.name + ' 详细信息');
+
+        var detailHtml =
+            '<div class="detail-item"><span class="detail-label">通道名称：</span><span class="detail-value">' + channel.name + '</span></div>' +
+            '<div class="detail-item"><span class="detail-label">脑区位置：</span><span class="detail-value">' + channel.brainRegion + '</span></div>' +
+            '<div class="detail-item"><span class="detail-label">当前数值：</span><span class="detail-value">' + channel.value.toFixed(6) + '</span></div>' +
+            '<div class="detail-item"><span class="detail-label">描述信息：</span><span class="detail-value">' + channel.description + '</span></div>';
+
+        $('#channelDetail').html(detailHtml);
+        $('#channelInfo').removeClass('hidden');
+
+        // 初始化或更新分析图表
+        initAnalysisChart(channel.analysis);
+    }
+
+    // 初始化分析图表
+    function initAnalysisChart(analysisData) {
+        var chartDom = document.getElementById('analysisChart');
+
+        if (!analysisChart) {
+            analysisChart = echarts.init(chartDom);
+        }
+
+        var option = {
+            title: {
+                text: '通道数据分析',
+                left: 'center',
+                top: 0,
+                textStyle: {
+                    fontSize: 14
+                }
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            grid: {
+                top: 40,
+                bottom: 20,
+                left: 50,
+                right: 20
+            },
+            xAxis: {
+                type: 'category',
+                data: ['均值', '标准差', '最大值', '最小值'].concat(
+                    analysisData.power_spectrum.map(function(_, i) { return '频带' + (i+1); })
+                )
+            },
+            yAxis: {
+                type: 'value'
+            },
+            series: [{
+                name: '分析指标',
+                type: 'bar',
+                data: [
+                    analysisData.mean,
+                    analysisData.std,
+                    analysisData.max,
+                    analysisData.min
+                ].concat(analysisData.power_spectrum),
+                itemStyle: {
+                    color: '#1E9FFF'
+                }
+            }]
+        };
+
+        analysisChart.setOption(option);
+    }
+
+    // 初始化
+    initTopoChart();
+
+    // 文件选择事件
+    form.on('select(dataFile)', function(data) {
+        if (data.value) {
+            loadData(data.value);
+        }
+    });
+
+    // 加载按钮点击事件
+    $('#loadDataBtn').on('click', function() {
+        var filePath = $('#dataFile').val();
+        if (!filePath) {
+            layer.msg('请先选择数据文件', {icon: 2});
+            return;
+        }
+        loadData(filePath);
+    });
+
+    // 窗口大小改变时重绘图表
+    $(window).on('resize', function() {
+        if (topoChart) {
+            topoChart.resize();
+        }
+        if (analysisChart) {
+            analysisChart.resize();
+        }
+    });
+});
+</script>

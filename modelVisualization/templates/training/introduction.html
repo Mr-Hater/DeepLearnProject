@@ -1,1 +1,84 @@
-adfasdf
+{% load static %}
+
+<link rel="stylesheet" href="{% static "plugins/layui-v2.13.3/layui/css/layui.css" %}">
+
+<style>
+    body{
+        margin:20px;
+    }
+    .chart{
+        width:100%;
+        height:420px;
+        margin-bottom:40px;
+    }
+</style>
+
+<body class="layui-container">
+    <h1>SEED脑电数据科研可视化平台</h1>
+
+
+<div>
+
+数据集
+
+<select id="dataset"></select>
+
+mat文件
+
+<select id="matfile"></select>
+
+<button onclick="loadData()"
+class="layui-btn">
+
+加载
+
+</button>
+
+</div>
+
+
+
+<h2>62通道脑电时间曲线</h2>
+
+<div id="timechart"
+style="height:900px"></div>
+
+
+
+<h2>功率谱</h2>
+
+<div id="psd"
+style="height:400px"></div>
+
+
+
+<h2>情绪对比</h2>
+
+<div id="emotion"
+style="height:400px"></div>
+
+
+
+<h2>头皮Topomap</h2>
+
+<div id="topomap"
+style="height:400px"></div>
+
+
+
+<h2>EEG三维头模型</h2>
+
+<div id="brain3d"
+style="height:500px"></div>
+
+
+    <script src="{% static "js/echarts.min.js" %}"></script>
+    <script src="{% static "js/main.js" %}"></script>
+    <script src="{% static "plugins/layui-v2.13.3/layui/layui.js" %}"></script>
+    <script>
+        layui.use('element', function () {
+            initCharts();
+            initChannels();
+        })
+    </script>
+</body>

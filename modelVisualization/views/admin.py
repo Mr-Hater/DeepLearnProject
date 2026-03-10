@@ -54,6 +54,8 @@ def load_left_menu(request):
         #     <li class="layui-nav-item"><a href="javascript:;">首页菜单2</a></li>
         # </ul>
         # """
+    elif menu_type == 'SEEDVisualization':
+        html = render_to_string('SeedVisualization/leftList.html')
     else:
         # 其他类型的菜单
         html = """
@@ -72,7 +74,7 @@ def load_content(request):
         # 返回 first.html 的内容
         html = render_to_string('introduction/content.html')
     elif content_type == 'useModel':
-        html = render_to_string('training/index.html')
+        html = render_to_string('training/content.html')
     elif content_type == 'visualization':
         html = render_to_string('visualization/content.html')
     elif content_type == 'home':
@@ -86,6 +88,8 @@ def load_content(request):
         # </blockquote>
         # <div><img src="/static/img/2.gif" style="margin: 0 auto; height: auto;width: 100%"></div>
         # """
+    elif content_type == 'SEEDVisualization':
+        html = render_to_string('SeedVisualization/index.html')
     else:
         html = f"""
         <div class="layui-card">

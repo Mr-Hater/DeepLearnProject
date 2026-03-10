@@ -1,0 +1,25 @@
+<!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+<ul class="layui-nav layui-nav-tree" lay-filter="SEEDVisualization">
+    <li class="layui-nav-item"><a href="javascript:;" data-target="topomap">脑点拓扑</a></li>
+    <li class="layui-nav-item"><a href="javascript:;" data-target="singleEEG" >单个mat分析</a></li>
+    <li class="layui-nav-item"><a href="javascript:;" data-target="doubleEEG">不同mat分析</a></li>
+
+    <li class="layui-nav-item">
+        <a class="" href="javascript:;">单个mat分析</a>
+        <dl class="layui-nav-child">
+            <dd><a href="javascript:;" data-target="EEGNet">EEG时间曲线图</a></dd>
+            <dd><a href="javascript:;" data-target="CDCN">EEG信号热力图</a></dd>
+            <dd><a href="javascript:;" data-target="Tsception">PSD功率谱密度分析</a></dd>
+            <dd><a href="javascript:;" data-target="AC-CDCN">PSD热力图</a></dd>
+        </dl>
+    </li>
+    <li class="layui-nav-item">
+        <a class="" href="javascript:;">不同mat分析</a>
+        <dl class="layui-nav-child">
+            <dd><a href="javascript:;" data-target="EEGNet">EEGNet</a></dd>
+            <dd><a href="javascript:;" data-target="CDCN">CDCN</a></dd>
+            <dd><a href="javascript:;" data-target="Tsception">Tsception</a></dd>
+            <dd><a href="javascript:;" data-target="AC-CDCN">AC-CDCN</a></dd>
+        </dl>
+    </li>
+</ul>

@@ -30,7 +30,7 @@ def load_model_registration(request):
     return JsonResponse({'html': html})
 
 def load_model_history(request):
-    """加载模型注册页面"""
+    """加载训练历史页面"""
     html = render_to_string('training/history.html')
     return JsonResponse({'html': html})
 
@@ -267,7 +267,6 @@ def start_training(request):
                 for key, value in config_data.items():
                     if hasattr(config_obj, key):
                         if type(value) != list:
-                            print(type(value))
                             if value.isdigit():
                                 value = int(value)
                             elif _is_float(value):
@@ -279,8 +278,6 @@ def start_training(request):
                 threading.Thread(target=train_module.main, args=(config_obj,)).start()
 
                 return JsonResponse({'success': True, 'message': '训练开始'})
-
-
 
     return JsonResponse({'success': False, 'message': '无效请求'})
 

@@ -1,0 +1,53 @@
+{% load static %}
+<h1>SEED数据介绍</h1>
+<h3>目的很简单，查看知名SEED数据集的数据特征以发现模型需要在什么情况下找到什么样的数据</h3>
+<h3>数据集所在网址：<a style="color: #1b6d85" href="https://bcmi.sjtu.edu.cn/home/seed/seed_cn.html" target="_blank">SEED数据集</a></h3>
+<p></p>
+<div class="layui-panel">
+  <div style="padding: 32px;">
+      <h4>
+      从材料库中选择了十五个中国电影片段（积极、中性和消极情绪）作为实验中使用的刺激材料。 电影片段的选择标准如下：
+      <p>(a) 整个实验的长度不应太长，以免引起受试者疲劳；</p>
+      <p>(b) 视频应该无需解释即可理解；</p>
+      <p>(c) 视频应该引发单一的目标情绪。</p>
+        每个电影片段的持续时间约为4分钟。 每个电影片段都经过精心编辑，以创造连贯的情绪诱发并最大化情绪意义。
+      实验中使用的电影片段详情如下所示：
+      <p>-</p>
+      <p style="text-align: center"><img  height="221" width="445"  src="{% static 'img/stimuli_table.png' %}"></p>
+      <p>-</p>
+      <p>每个实验总共有15个试验。 每个片段前有5秒的提示，每个片段后有45秒用于自我评估和15秒的休息时间。</p>
+      <p>呈现顺序的安排方式是，不连续显示针对相同情绪的两个电影片段。反馈方面，要求参与者在观看每个片段后立即完成问卷，报告他们对每个电影片段的情绪反应。详细范式如下所示：</p>
+      <p>-</p>
+      <p style="text-align: center"><img height="171" width="623"  src="{% static 'img/protocol.png' %}"></p>
+      <p>-</p>
+      <p>使用62通道ESI NeuroScan系统和 SMI眼动追踪眼镜收集脑电信号和眼动数据。实验场景和相应的脑电电极放置如下图所示。</p>
+      <p>-</p>
+      <p style="text-align: center"><img height="400" width="400" src="{% static 'img/seed.png' %}"></p>
+        <p>-</p>
+      </h4>
+  </div>
+</div>
+<div class="layui-collapse">
+  <div class="layui-colla-item">
+    <div class="layui-colla-title">受试者</div>
+    <div class="layui-colla-content">
+        <h4>15名中国受试者（7名男性和8名女性；平均年龄：23.27岁，标准差：2.37）参与了实验。 为保护个人隐私，我们隐藏了他们的姓名，并用1到15的数字表示每个受试者。 第1至第5名和第8至第14名受试者（共12名）有脑电和眼动数据，而第6、7和15名受试者只有脑电数据。</h4>
+    </div>
+  </div>
+  <div class="layui-colla-item">
+    <div class="layui-colla-title">数据集概述</div>
+    <div class="layui-colla-content">
+      <h4>SEED由两部分组成：SEED_EEG和SEED_Multimodal。SEED_EEG包含15名受试者的脑电数据。SEED_Multimodal包含12名受试者的脑电和眼动数据。 这两部分中受试者的索引是相同的。例如，如果一名受试者在SEED_EEG中的索引是第1名，那么该受试者在SEED_Multimodal中的索引也是第1名。</h4>
+        <p>-</p>
+        <h3>1. SEED_EEG</h3>
+        <h5>A.在"Preprocessed_EEG"文件夹中，有包含降采样、预处理和分段版本的脑电数据的MATLAB文件（.mat文件）。 数据被降采样至200 Hz。 应用了0-75 Hz的带通频率滤波器。 我们提取了与每部电影持续时间相对应的脑电片段。 总共有45个扩展名为.mat的文件（MATLAB文件），每个实验一个。 每个受试者进行了三次实验，间隔约一周。 每个受试者文件包含16个数组。 十五个数组包含一个实验中15个试验的分段预处理脑电数据（eeg_1~eeg_15，通道×数据）。 数组名称标签包含相应情绪标签 （-1表示消极，0表示中性，+1表示积极）。 通道的详细顺序包含在数据集中。 62通道的脑电帽根据国际10-20系统排列</h5>
+        <h5>B.在"Extracted_Features"文件夹中，有包含脑电信号提取的差分熵（DE）特征的文件， 这是在[2]中首次提出的。 这些数据非常适合那些想要快速测试分类方法而不预处理原始脑电数据的人。文件格式与Data_preprocessed相同。我们还计算了27对半球不对称电极的DE特征之间的差异和比率，得到差分不对称性（DASM）和比率不对称性（RASM）特征。所有特征都通过传统的移动平均和线性动态系统（LDS）方法进行了进一步平滑处理。有关特征提取和特征平滑的更多详细信息，请参考[1]和[2]。</h5>
+        <p>-</p>
+        <h3>2.SEED_Multimodal</h3>
+        <h5>A.'Chinese'文件夹包含四个子文件夹。</h5>
+        <h5>B.'code'文件夹包含本文使用的模型的源代码。</h5>
+        <h5>C.'information.xlsx'：包含实验和受试者的信息。</h5>
+    </div>
+  </div>
+</div>
+<script src="{% static "plugins/layui-v2.13.3/layui/layui.js" %}"></script>
